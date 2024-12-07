@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Real-Time Video Streaming</title>
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css">
+
+    <style>
+        .container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            margin-top: 20px;
+        }
+        .arrow-container {
+            display: flex;
+            align-items: center;
+            margin: 15px 0;
+        }
+        .arrow {
+            position: relative;
+            width: 200px;
+            height: 2px;
+            background-color: #000;
+        }
+        .arrow::after {
+            content: '';
+            position: absolute;
+            top: -5px;
+            right: -10px;
+            border: 5px solid transparent;
+            border-left-color: #000;
+        }
+        .arrow-text {
+            margin-left: 10px;
+            font-weight: bold;
+            color: #333;
+        }
+    </style>
+
+<script>
+    // Function to fetch labels and update HTML
+    function fetchLabels() {
+        fetch('/get_labels')
+            .then(response => response.json())
+            .then(data => {
+                document.getElementById('classical-class-label').innerText = "Classical Model Result: " + data.classical_class_label;
+                document.getElementById('classical-attacked-class-label').innerText = "Classical Model Attack Result: " + data.classical_attacked_class_label;
+
+                document.getElementById('quantum-class-label').innerText = "Quantum Model Result: " + data.quantum_class_label;
+                document.getElementById('quantum-attacked-class-label').innerText = "Quantum Model Attack Result: " + data.quantum_attacked_class_label;
+                })
+            .catch(error => console.error('Error fetching labels:', error));
+    }
+
+    // Fetch labels every 3 seconds
+    setInterval(fetchLabels, 3000);
+</script>
+</head>
+<body>
+    {% include 'navbar.html' %}
+    
+    <div class="container">
+        <h1>Real-Time Video Feed</h1>
+        <img src="{{ url_for('video_feed') }}" width="160" height="120" alt="Main Video Feed">
+
+        <!-- Arrow with text -->
+        <div class="arrow-container">
+            <div class="arrow"></div>
+            <div class="arrow-text">Extracted Sign Detection from Object Detection Model</div>
+        </div>
+        
+        <h1>Cropped Detected Object</h1>
+        <img src="{{ url_for('cropped_feed') }}" width="160" height="120" alt="Cropped Detected Object">
+        <h3 id="classical-class-label">Classical Model Result: {{ classical_class_label }}</h3>
+        <h3 id="quantum-class-label">Quantum Model Result: {{ quantum_class_label }}</h3>
+
+        <h1>Adversarial Attack Result</h1>
+        <img src="{{ url_for('attacked_feed') }}" width="160" height="120" alt="Adversarial Attack Image">
+        <h3 id="classical-attacked-class-label">Classical Model Attack Result: {{ classical_attacked_class_label }}</h3>
+        <h3 id="quantum-attacked-class-label">Quantum Model Attack Result: {{ quantum_attacked_class_label }}</h3>
+
+    </div>
+</body>
+</html>

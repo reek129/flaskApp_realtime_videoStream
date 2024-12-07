@@ -1,0 +1,239 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Real-Time Video Streaming</title>
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css">
+
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script> <!-- Chart.js for dynamic graph -->
+
+
+    <style>
+
+        body {
+            background-image: url("{{ url_for('static', filename='tracr-logo.png') }}");
+            background-size: 20%;  /* Adjust the size of the image (you may try 50% or smaller) */
+            background-position: center;
+            background-repeat: no-repeat;
+            background-attachment: fixed;
+            color: #fff; /* Adjust text color for readability */
+        }
+
+        /* Add a semi-transparent overlay */
+        .container {
+            display: flex;
+            flex-direction: row;
+            justify-content: space-between;
+            margin-top: 20px;
+            background-color: rgba(104, 113, 237, 0.6); /* Semi-transparent dark background for readability */
+            padding: 20px;
+            border-radius: 10px;
+        }
+
+        .model-results, .dynamic-graphs {
+            width: 48%;
+        }
+/* 
+        body {
+            background-image: url("{{ url_for('static', filename='tracr-logo.png') }}");
+            background-size: cover;
+            background-position: center;
+            background-repeat: no-repeat;
+            background-attachment: fixed;
+            color: #fff; 
+        }
+
+        .container {
+            display: flex;
+            flex-direction: row;
+            justify-content: space-between;
+            margin-top: 20px;
+        }
+        .model-results, .dynamic-graphs {
+            width: 48%;
+        } */
+        .arrow-container {
+            display: flex;
+            align-items: center;
+            margin: 15px 0;
+        }
+        .arrow {
+            position: relative;
+            width: 200px;
+            height: 2px;
+            background-color: #000;
+        }
+        .arrow::after {
+            content: '';
+            position: absolute;
+            top: -5px;
+            right: -10px;
+            border: 5px solid transparent;
+            border-left-color: #000;
+        }
+        .arrow-text {
+            margin-left: 10px;
+            font-weight: bold;
+            color: #333;
+        }
+        /* Enhance readability in the chart */
+        #performanceChart {
+            color: #fff; /* Set text color to white */
+        }
+
+        /* Chart.js specific styling */
+        .chartjs-render-monitor {
+            font-size: 14px; /* Increase font size for chart labels */
+        }
+
+        .chartjs-legend-label {
+            color: #fff; /* White color for chart legend */
+            font-weight: bold; /* Bold for better readability */
+        }
+    </style>
+
+<script>
+    // Function to fetch labels and update HTML
+    function fetchLabels() {
+        fetch('/get_labels')
+            .then(response => response.json())
+            .then(data => {
+                console.log(data);
+                // document.getElementById('classical-class-label').innerText = "Classical Model Result: " + data.classical_class_label;
+                // document.getElementById('classical-attacked-class-label').innerText = "Classical Model Attack Result: " + data.classical_attacked_class_label;
+
+                // document.getElementById('quantum-class-label').innerText = "Quantum Model Result: " + data.quantum_class_label;
+                // document.getElementById('quantum-attacked-class-label').innerText = "Quantum Model Attack Result: " + data.quantum_attacked_class_label;
+                
+                const classicalLabel = document.getElementById('classical-class-label');
+                if (classicalLabel) {
+                    classicalLabel.innerText = "Classical Model Result: " + data.classical_class_label;
+                }
+
+                const quantumLabel = document.getElementById('quantum-class-label');
+                if (quantumLabel) {
+                    quantumLabel.innerText = "Quantum Model Result: " + data.quantum_class_label;
+                }
+
+                const classicalAttackLabel = document.getElementById('classical-attack-label');
+                if (classicalAttackLabel) {
+                    classicalAttackLabel.innerText = "Classical Model Attack Result: " + data.classical_attacked_class_label;
+                }
+
+                const quantumAttackLabel = document.getElementById('quantum-attack-label');
+                if (quantumAttackLabel) {
+                    quantumAttackLabel.innerText = "Quantum Model Attack Result: " + data.quantum_attacked_class_label;
+                }
+
+                // Update chart with new performance data
+                updateChart(data.classical_accuracy, data.quantum_accuracy);
+                })
+            .catch(error => console.error('Error fetching labels:', error));
+    }
+
+    // Initialize chart
+    function createChart() {
+            const ctx = document.getElementById('performanceChart').getContext('2d');
+            window.performanceChart = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: [],  // Time labels will be dynamically added
+                    datasets: [
+                        {
+                            label: 'Classical Model Accuracy After Attack',
+                            data: [],
+                            borderColor: 'rgba(75, 192, 192, 1)',
+                            fill: false
+                        },
+                        {
+                            label: 'Quantum Model Accuracy After Attack',
+                            data: [],
+                            borderColor: 'rgba(255, 99, 132, 1)',
+                            fill: false
+                        }
+                    ]
+                },
+                options: {
+                    scales: {
+                        x: { title: { display: true, text: 'Time' } },
+                        y: { title: { display: true, text: 'Accuracy (%)' }, min: 0, max: 100 }
+                    }
+                }
+            });
+        }
+    // Function to update chart data
+    function updateChart(classicalAccuracy, quantumAccuracy) {
+            const timeLabel = new Date().toLocaleTimeString(); // Use current time as label
+            window.performanceChart.data.labels.push(timeLabel);
+            window.performanceChart.data.datasets[0].data.push(classicalAccuracy);
+            window.performanceChart.data.datasets[1].data.push(quantumAccuracy);
+
+            // Limit to last 10 data points
+            if (window.performanceChart.data.labels.length > 10) {
+                window.performanceChart.data.labels.shift();
+                window.performanceChart.data.datasets[0].data.shift();
+                window.performanceChart.data.datasets[1].data.shift();
+            }
+
+            window.performanceChart.update();
+        }
+
+
+
+
+    // Fetch labels every 3 seconds
+    setInterval(fetchLabels, 3000);
+
+    // Initialize chart on page load
+    window.onload = createChart;
+</script>
+</head>
+<body>
+    {% include 'navbar.html' %}
+    <div class="container">
+        <!-- Model Results Section -->
+        <div class="model-results">
+            <h1>Real-Time Video Feed</h1>
+            <img src="{{ url_for('video_feed') }}" width="160" height="120" alt="Main Video Feed">
+
+            <!-- <div class="arrow-container">
+                <div class="arrow"></div>
+                <div class="arrow-text">Extracted Sign Detection from Object Detection Model</div>
+            </div> -->
+            
+            <h1>Cropped Detected Object</h1>
+            <div style="display: flex; justify-content: space-between;">
+                <div>
+                    <h4>Classical Model</h4>
+                    <img src="{{ url_for('cropped_feed') }}" width="160" height="120" alt="Classical Model">
+                    <h3 id="classical-class-label">Classical Model Result: {{ classical_class_label }}</h3>
+                </div>
+                <div>
+                    <h4>Quantum Model</h4>
+                    <img src="{{ url_for('cropped_feed') }}" width="160" height="120" alt="Quantum Model">
+                    <h3 id="quantum-class-label">Quantum Model Result: {{ quantum_class_label }}</h3>
+                </div>
+            </div>
+
+            <h1>Adversarial Attack Result</h1>
+            <div style="display: flex; justify-content: space-between;">
+                <div>
+                    <img src="{{ url_for('attacked_feed') }}" width="160" height="120" alt="Classical Attack">
+                    <h3 id="classical-attack-label">Classical Model Attack Result: {{ classical_attacked_class_label }}</h3>
+                </div>
+                <div>
+                    <img src="{{ url_for('attacked_feed') }}" width="160" height="120" alt="Quantum Attack">
+                    <h3 id="quantum-attack-label">Quantum Model Attack Result: {{ quantum_attacked_class_label }}</h3>
+                </div>
+            </div>
+        </div>
+
+        <!-- Dynamic Graph Section -->
+        <div class="dynamic-graphs">
+            <h1>Performance Over Time</h1>
+            <canvas id="performanceChart" width="400" height="400"></canvas>
+        </div>
+    </div>
+</body>
+</html>
